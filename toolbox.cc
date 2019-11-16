@@ -146,12 +146,6 @@ void ToolBox::mouseMoveEvent(QMouseEvent *event)
 {
     QPoint pos = event->pos();
 
-    if(m_toolBoxHandlePressed){
-        move(mapToParent(event->pos() - m_lastMousePos));
-        setCursor(Qt::ClosedHandCursor);
-        return;
-    }
-
     if(m_longPressed) {
         for(int i=0; i<m_secondaryTools.count(); i++){
             if(m_secondaryTools[i].contains(pos)){
@@ -161,18 +155,26 @@ void ToolBox::mouseMoveEvent(QMouseEvent *event)
             }
         }
         m_subToolActivated = -1;
+    }else if(m_toolBoxHandlePressed){
+        move(mapToParent(event->pos() - m_lastMousePos));
+        setCursor(Qt::ClosedHandCursor);
+        return;
     }
 
     if(m_toolBoxHandle.contains(pos)){
         setCursor(Qt::OpenHandCursor);
+    }else{
+        setCursor(Qt::ArrowCursor);
     }
 }
 
 void ToolBox::mouseReleaseEvent(QMouseEvent *event)
 {
     Q_UNUSED(event)
+
     m_longPressed = false;
     m_toolBoxHandlePressed = false;
+
     if(m_subToolActivated >= 0){
         m_tools[m_activated].swap(m_subToolActivated);
     }
@@ -183,6 +185,6 @@ void ToolBox::mouseReleaseEvent(QMouseEvent *event)
 
 void ToolBox::longPressEvent()
 {
-    m_longPressed = true;
+    m_longPressed = true && !m_toolBoxHandlePressed;
     update();
 }
