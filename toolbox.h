@@ -2,6 +2,8 @@
 #define TOOLBOX_H
 
 #include <QWidget>
+#include <QTimer>
+
 #include "tool.h"
 
 class ToolBox : public QWidget
@@ -13,12 +15,18 @@ public:
     void mousePressEvent(QMouseEvent *event) override;
 
     void addTool(Tool t);
+    void addBreak();
+
+public Q_SLOTS:
+    void longPressEvent();
 
 private:
     int m_activated, m_padding;
     QSize m_buttonSize;
     QVector<QRect> m_toolRects;
     QVector<Tool> m_tools;
+    QVector<int> m_breaks;
+    QTimer m_timer;
 };
 
 #endif // TOOLBOX_H

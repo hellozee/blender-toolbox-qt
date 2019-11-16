@@ -20,9 +20,12 @@ MainWindow::MainWindow(QWidget *parent)
 
     ToolBox *tb = ui->widget;
     tb->addTool(transformTool);
+    tb->addBreak();
     tb->addTool(rectangularMarqueeTool);
     tb->addTool(lassoTool);
+    tb->addBreak();
     tb->addTool(cropTool);
+    tb->addBreak();
     tb->addTool(rectangleTool);
     tb->addTool(textTool);
     tb->addTool(editShapesTool);
