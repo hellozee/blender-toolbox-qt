@@ -1,0 +1,21 @@
+<RCC>
+    <qresource prefix="/">
+        <file>light_draw-text.svg</file>
+        <file>light_krita_draw_path.svg</file>
+        <file>light_krita_tool_ellipse.svg</file>
+        <file>light_krita_tool_freehand.svg</file>
+        <file>light_krita_tool_line.svg</file>
+        <file>light_polyline.svg</file>
+        <file>light_krita_tool_polygon.svg</file>
+        <file>light_shape_handling.svg</file>
+        <file>light_tool_outline_selection.svg</file>
+        <file>light_tool_path_selection.svg</file>
+        <file>light_krita_tool_rectangle.svg</file>
+        <file>light_tool_crop.svg</file>
+        <file>light_krita_tool_transform.svg</file>
+        <file>light_tool_elliptical_selection.svg</file>
+        <file>light_tool_polygonal_selection.svg</file>
+        <file>light_tool_rect_selection.svg</file>
+        <file>light_tool_magnetic_selection.svg</file>
+    </qresource>
+</RCC>
