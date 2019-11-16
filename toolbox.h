@@ -29,7 +29,9 @@ private:
     QVector<Tool> m_tools;
     QVector<int> m_breaks;
     QTimer m_timer;
-    bool m_longPressed;
+    bool m_longPressed, m_toolBoxHandlePressed;
+    QRect m_toolBoxHandle;
+    QPoint m_lastMousePos;
 };
 
 #endif // TOOLBOX_H

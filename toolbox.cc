@@ -6,7 +6,7 @@
 
 ToolBox::ToolBox(QWidget *parent) :
     QWidget(parent), m_activated(-1), m_padding(10), m_subToolActivated(-1),
-    m_buttonSize(40, 40), m_longPressed(false)
+    m_buttonSize(40, 40), m_longPressed(false), m_toolBoxHandlePressed(false)
 {
     setWindowFlags(Qt::Widget | Qt::FramelessWindowHint);
     setAttribute(Qt::WA_NoSystemBackground, true);
@@ -15,6 +15,7 @@ ToolBox::ToolBox(QWidget *parent) :
     m_timer.setSingleShot(true);
 
     connect(&m_timer, &QTimer::timeout, this, &ToolBox::longPressEvent);
+    setMouseTracking(true);
 }
 
 void ToolBox::paintEvent(QPaintEvent *event)
@@ -22,9 +23,12 @@ void ToolBox::paintEvent(QPaintEvent *event)
     QPainter gc(this);
     gc.setRenderHint(QPainter::Antialiasing);
 
-    QPoint topLeft = event->rect().topLeft();
+    QPoint tempTopLeft = event->rect().topLeft();
     QColor highlightedBack(86, 128, 194);
     QColor back(49, 49, 49);
+    m_toolBoxHandle = QRect(tempTopLeft, QSize(m_buttonSize.width(), 7));
+    gc.fillRect(m_toolBoxHandle, back);
+    QPoint topLeft = tempTopLeft + QPoint(0, 9);
     m_toolRects.clear();
 
     for(int i=0; i<m_breaks.count(); i++){
@@ -41,7 +45,7 @@ void ToolBox::paintEvent(QPaintEvent *event)
     }
 
     int breakCount = 0;
-    topLeft = event->rect().topLeft();
+    topLeft = tempTopLeft + QPoint(0, 9);
 
     for(int i=0;i<m_tools.count();i++){
         QRect toolRect(topLeft, m_buttonSize);
@@ -122,6 +126,11 @@ void ToolBox::addBreak()
 void ToolBox::mousePressEvent(QMouseEvent *event)
 {
     QPoint pos = event->pos();
+    m_lastMousePos = pos;
+
+    if(m_toolBoxHandle.contains(pos)){
+        m_toolBoxHandlePressed = true;
+    }
 
     for(int i=0; i<m_tools.count(); i++){
         if(m_toolRects[i].contains(pos)){
@@ -137,7 +146,12 @@ void ToolBox::mouseMoveEvent(QMouseEvent *event)
 {
     QPoint pos = event->pos();
 
-    if(m_longPressed){
+    if(m_toolBoxHandlePressed){
+        move(mapToParent(event->pos() - m_lastMousePos));
+        return;
+    }
+
+    if(m_longPressed) {
         for(int i=0; i<m_secondaryTools.count(); i++){
             if(m_secondaryTools[i].contains(pos)){
                 m_subToolActivated = i;
@@ -153,6 +167,7 @@ void ToolBox::mouseReleaseEvent(QMouseEvent *event)
 {
     Q_UNUSED(event)
     m_longPressed = false;
+    m_toolBoxHandlePressed = false;
     if(m_subToolActivated >= 0){
         m_tools[m_activated].swap(m_subToolActivated);
     }
