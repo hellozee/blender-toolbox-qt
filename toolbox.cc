@@ -6,7 +6,7 @@
 
 ToolBox::ToolBox(QWidget *parent) :
     QWidget(parent), m_activated(-1), m_padding(10), m_subToolActivated(-1),
-    m_buttonSize(40, 40), m_longPressed(false), m_toolBoxHandlePressed(false)
+    m_buttonSize(40, 40), m_longPressed(false), m_toolBoxHandlePressed(false), m_unlocked(false)
 {
     setWindowFlags(Qt::Widget | Qt::FramelessWindowHint);
     setAttribute(Qt::WA_NoSystemBackground, true);
@@ -16,6 +16,21 @@ ToolBox::ToolBox(QWidget *parent) :
 
     connect(&m_timer, &QTimer::timeout, this, &ToolBox::longPressEvent);
     setMouseTracking(true);
+    setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(this, &QWidget::customContextMenuRequested, this, &ToolBox::showContextMenu);
+
+    m_contextMenu = new QMenu(this);
+    m_unlockAction = new QAction("Unlock ToolBox", this);
+    m_contextMenu->addAction(m_unlockAction);
+    connect(m_unlockAction, &QAction::triggered, this, &ToolBox::slotUnlockToolBox);
+
+    m_rotateAction = new QAction("Rotate ToolBox", this);
+    m_contextMenu->addAction(m_rotateAction);
+    connect(m_rotateAction, &QAction::triggered, this, &ToolBox::slotRotateToolBox);
+
+    m_rowModeAction = new QAction("Change Row Mode", this);
+    m_contextMenu->addAction(m_rowModeAction);
+    connect(m_rowModeAction, &QAction::triggered, this, &ToolBox::slotChangeRowMode);
 }
 
 void ToolBox::paintEvent(QPaintEvent *event)
@@ -26,9 +41,13 @@ void ToolBox::paintEvent(QPaintEvent *event)
     QPoint tempTopLeft = event->rect().topLeft();
     QColor highlightedBack(86, 128, 194);
     QColor back(49, 49, 49);
-    m_toolBoxHandle = QRect(tempTopLeft, QSize(m_buttonSize.width(), 7));
-    gc.fillRect(m_toolBoxHandle, back);
-    QPoint topLeft = tempTopLeft + QPoint(0, 9);
+
+    if(m_unlocked){
+        QRect toolBoxHandle = QRect(tempTopLeft, QSize(m_buttonSize.width(), 7));
+        gc.fillRect(toolBoxHandle, back);
+        tempTopLeft += QPoint(0, 9);
+    }
+    QPoint topLeft = tempTopLeft;
     m_toolRects.clear();
 
     for(int i=0; i<m_breaks.count(); i++){
@@ -45,7 +64,7 @@ void ToolBox::paintEvent(QPaintEvent *event)
     }
 
     int breakCount = 0;
-    topLeft = tempTopLeft + QPoint(0, 9);
+    topLeft = tempTopLeft;
 
     for(int i=0;i<m_tools.count();i++){
         QRect toolRect(topLeft, m_buttonSize);
@@ -128,8 +147,12 @@ void ToolBox::mousePressEvent(QMouseEvent *event)
     QPoint pos = event->pos();
     m_lastMousePos = pos;
 
-    if(m_toolBoxHandle.contains(pos)){
+    if(event->button() != Qt::LeftButton)
+        return;
+
+    if(m_unlocked){
         m_toolBoxHandlePressed = true;
+        return;
     }
 
     for(int i=0; i<m_tools.count(); i++){
@@ -146,6 +169,17 @@ void ToolBox::mouseMoveEvent(QMouseEvent *event)
 {
     QPoint pos = event->pos();
 
+    if(m_unlocked){
+        setCursor(Qt::OpenHandCursor);
+        if(m_toolBoxHandlePressed){
+            move(mapToParent(event->pos() - m_lastMousePos));
+            setCursor(Qt::ClosedHandCursor);
+            return;
+        }
+    }else{
+        setCursor(Qt::ArrowCursor);
+    }
+
     if(m_longPressed) {
         for(int i=0; i<m_secondaryTools.count(); i++){
             if(m_secondaryTools[i].contains(pos)){
@@ -155,16 +189,6 @@ void ToolBox::mouseMoveEvent(QMouseEvent *event)
             }
         }
         m_subToolActivated = -1;
-    }else if(m_toolBoxHandlePressed){
-        move(mapToParent(event->pos() - m_lastMousePos));
-        setCursor(Qt::ClosedHandCursor);
-        return;
-    }
-
-    if(m_toolBoxHandle.contains(pos)){
-        setCursor(Qt::OpenHandCursor);
-    }else{
-        setCursor(Qt::ArrowCursor);
     }
 }
 
@@ -173,12 +197,13 @@ void ToolBox::mouseReleaseEvent(QMouseEvent *event)
     Q_UNUSED(event)
 
     m_longPressed = false;
-    m_toolBoxHandlePressed = false;
 
     if(m_subToolActivated >= 0){
         m_tools[m_activated].swap(m_subToolActivated);
     }
+
     m_subToolActivated = -1;
+    m_toolBoxHandlePressed = false;
     update();
     setCursor(Qt::ArrowCursor);
 }
@@ -186,5 +211,27 @@ void ToolBox::mouseReleaseEvent(QMouseEvent *event)
 void ToolBox::longPressEvent()
 {
     m_longPressed = true && !m_toolBoxHandlePressed;
+    update();
+}
+
+void ToolBox::showContextMenu(QPoint pos)
+{
+    m_contextMenu->exec(mapToGlobal(pos));
+}
+
+void ToolBox::slotChangeRowMode()
+{
+    //TODO
+}
+
+void ToolBox::slotRotateToolBox()
+{
+    //TODO
+}
+
+void ToolBox::slotUnlockToolBox()
+{
+    m_unlocked = !m_unlocked;
+    m_subToolActivated = -1;
     update();
 }
