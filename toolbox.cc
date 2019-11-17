@@ -5,8 +5,9 @@
 #include <QTextItem>
 
 ToolBox::ToolBox(QWidget *parent) :
-    QWidget(parent), m_activated(-1), m_padding(10), m_subToolActivated(-1),
-    m_buttonSize(40, 40), m_longPressed(false), m_toolBoxHandlePressed(false), m_unlocked(false)
+    QWidget(parent), m_activated(-1), m_padding(10), m_subToolActivated(-1), m_buttonSize(40, 40),
+    m_longPressed(false), m_toolBoxHandlePressed(false), m_toolBoxOrientation(Vertical),
+    m_subToolsOrientation(Right), m_rowMode(Single), m_toolBoxState(Locked)
 {
     setWindowFlags(Qt::Widget | Qt::FramelessWindowHint);
     setAttribute(Qt::WA_NoSystemBackground, true);
@@ -31,6 +32,10 @@ ToolBox::ToolBox(QWidget *parent) :
     m_rowModeAction = new QAction("Change Row Mode", this);
     m_contextMenu->addAction(m_rowModeAction);
     connect(m_rowModeAction, &QAction::triggered, this, &ToolBox::slotChangeRowMode);
+
+    m_flipAction = new QAction("Flip Sub Tools", this);
+    m_contextMenu->addAction(m_flipAction);
+    connect(m_flipAction, &QAction::triggered, this, &ToolBox::slotFlipToolBox);
 }
 
 void ToolBox::paintEvent(QPaintEvent *event)
@@ -42,7 +47,7 @@ void ToolBox::paintEvent(QPaintEvent *event)
     QColor highlightedBack(86, 128, 194);
     QColor back(49, 49, 49);
 
-    if(m_unlocked){
+    if(m_toolBoxState == Unlocked){
         QRect toolBoxHandle = QRect(tempTopLeft, QSize(m_buttonSize.width(), 7));
         gc.fillRect(toolBoxHandle, back);
         tempTopLeft += QPoint(0, 9);
@@ -150,7 +155,7 @@ void ToolBox::mousePressEvent(QMouseEvent *event)
     if(event->button() != Qt::LeftButton)
         return;
 
-    if(m_unlocked){
+    if(m_toolBoxState == Unlocked){
         m_toolBoxHandlePressed = true;
         return;
     }
@@ -169,7 +174,7 @@ void ToolBox::mouseMoveEvent(QMouseEvent *event)
 {
     QPoint pos = event->pos();
 
-    if(m_unlocked){
+    if(m_toolBoxState == Unlocked){
         setCursor(Qt::OpenHandCursor);
         if(m_toolBoxHandlePressed){
             move(mapToParent(event->pos() - m_lastMousePos));
@@ -201,7 +206,7 @@ void ToolBox::mouseReleaseEvent(QMouseEvent *event)
     if(m_subToolActivated >= 0){
         m_tools[m_activated].swap(m_subToolActivated);
     }
-
+    m_timer.stop();
     m_subToolActivated = -1;
     m_toolBoxHandlePressed = false;
     update();
@@ -221,17 +226,43 @@ void ToolBox::showContextMenu(QPoint pos)
 
 void ToolBox::slotChangeRowMode()
 {
-    //TODO
+    if(m_rowMode == Single){
+        m_rowMode = Double;
+        m_flipAction->setEnabled(false);
+    }else{
+        m_rowMode = Single;
+        m_flipAction->setEnabled(true);
+    }
+    update();
 }
 
 void ToolBox::slotRotateToolBox()
 {
-    //TODO
+    if(m_toolBoxOrientation == Horizontal){
+        m_toolBoxOrientation = Vertical;
+    }else{
+        m_toolBoxOrientation = Horizontal;
+    }
+    update();
 }
 
 void ToolBox::slotUnlockToolBox()
 {
-    m_unlocked = !m_unlocked;
+    if(m_toolBoxState == Locked){
+        m_toolBoxState = Unlocked;
+    }else{
+        m_toolBoxState = Locked;
+    }
     m_subToolActivated = -1;
+    update();
+}
+
+void ToolBox::slotFlipToolBox()
+{
+    if(m_subToolsOrientation == Left){
+        m_subToolsOrientation = Right;
+    }else{
+        m_subToolsOrientation = Left;
+    }
     update();
 }
